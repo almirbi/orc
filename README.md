@@ -1,11 +1,11 @@
-# orc
-An orchestration script for building and receiving serial data for Contiki OS programs.
+# Orc
+An orchestration/test script for building ContikiOS programs and receiving serial data from SKY motes using ContikiOS.
 
-#Installation
+# Installation
 
 ```bash npm install```
 
-#Example usage
+# Example usage
 
 ```javascript
 let Orchestrator = require('./app/Orchestrator.js');
