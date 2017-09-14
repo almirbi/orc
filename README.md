@@ -16,10 +16,10 @@ let config = {
         receiving: "/dev/ttyUSB1",
         jamlab: "/dev/ttyUSB0"
     },
-    repetitions: 1,
+    repetitions: 2,
     channels: [26],
     rdcDrivers: ['nullrdc_driver', 'contikimac_driver'],
-    interferenceTypes: [1, 2, 3, 4, 5, 6, 7],
+    interferenceTypes: [0x701, 1, 2, 3, 4, 5, 6, 7],
     programPaths: {
         jamlab: '/code/jamlab/',
         communication: '/code/communication/'
