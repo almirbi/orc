@@ -1,0 +1,17 @@
+{
+  "name": "jamlab-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jsonfile": "^4.0.0",
+    "log4js": "^2.3.3",
+    "serialport": "^5.0.0",
+    "shelljs": "^0.7.8"
+  }
+}
