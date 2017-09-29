@@ -137,7 +137,7 @@
             this.packets.pop();
             let average = this.calculateAverage();
             let variance = this.calculateVariance(average);
-            this.customLogger.debug(`Period: ${measurement.period}, average: ${averagePeriod}ms, variance: ${variance}ms`);
+            this.customLogger.debug(`Period: ${measurement.period}, average: ${average}ms, variance: ${variance}ms`);
         }
 
         calculateAverage() {
