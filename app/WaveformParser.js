@@ -153,7 +153,8 @@
         calculateVariance(average) {
             let sum = 0.0;
             this.packets.forEach((packet, index) => {
-                sum += Math.pow((packet.period - average), (packet.period - average));;
+                let dif = Math.abs(packet.period - average);
+                sum += Math.pow(dif, dif);;
             });
             let variance = sum / this.packets.length;
             return variance;
