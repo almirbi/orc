@@ -1,5 +1,5 @@
 (function() {
-    let shell = require('shelljs'), 
+    const shell = require('shelljs'), 
         SerialPort = require('serialport'),
         parsers = SerialPort.parsers,
         nexutil = require('./NexutilManager.js'),
@@ -19,20 +19,30 @@
             this.contiki = undefined;
             this.repetitions = config.repetitions;
 
+            shell.rm('custom.log');
+            shell.rm('serial-communication-sending.log');
+            shell.rm('serial-communication-receiving.log');
+
             this.configureLogger();
         }
 
         configureLogger() {
             log4js.configure({
                 appenders: { 
-                    custom: { type: 'file', filename: 'custom.log' }
+                    custom: { type: 'file', filename: 'custom.log' },
+                    serialCommunicationSending: { type: 'file', filename: 'serial-communication-sending.log' },
+                    serialCommunicationReceiving: { type: 'file', filename: 'serial-communication-receiving.log' }
                 },
                 categories: {
+                    serialCommunicationSending: { appenders: ['serialCommunicationSending'], level: 'trace' },
+                    serialCommunicationReceiving: { appenders: ['serialCommunicationReceiving'], level: 'trace' },
                     default: { appenders: ['custom'], level: 'trace' }
                 }
             });
 
             this.customLogger = log4js.getLogger();
+            this.serialCommunicationSending = log4js.getLogger('serialCommunicationSending');
+            this.serialCommunicationReceiving = log4js.getLogger('serialCommunicationReceiving');
         }
 
         getMoteSerialPort(moteName) {
@@ -84,11 +94,11 @@
             this.connectSerial('receiving', (data) => {
                 try {
                     let result = JSON.parse(data);
-                    this.customLogger.debug(`Data received on serial (receiving)`, result);
+                    this.serialCommunicationReceiving.debug(`Data received on serial (receiving)`, result);
                     cb(result);
         
                 } catch(e) {
-                    this.customLogger.debug("Didnt get valid JSON on serial receiving.");
+                    // this.serialCommunicationReceiving.debug("Didnt get valid JSON on serial receiving.");
                 }
             });
 
@@ -99,23 +109,24 @@
                     try {
                         clearTimeout(watchDog);
                         let result = JSON.parse(data);
-                        this.customLogger.debug(`Data received on serial (sending)`, result);
+                        this.serialCommunicationSending.debug(`Data received on serial (sending)`, result);
                         cb(result);
                         if (result.result) {
                             setTimeout(() => {
                                 resolve(result);
-                            }, 5000);
+                            }, 10 * 1000);
                         }
+                        
                     } catch(e) {
-                        this.customLogger.debug("Didnt get valid JSON on serial sending.");
-                        this.customLogger.debug(data);
+                        // this.serialCommunicationSending.debug("Didnt get valid JSON on serial sending.");
+                        // this.serialCommunicationSending.debug(data);
                     }
 
                 });
 
                 watchDog = setTimeout(() => {
                     reject("Timed out waiting on serial");
-                }, 10 * 1000);
+                }, 30 * 1000);
             });
         }
 
@@ -245,15 +256,15 @@
                     };
     
                     this.cleanUp();
+                    this.customLogger.debug("Done");
+                    this.saveProgress(setup, {i, j, k, l});
+                    resolve(this.results);
                 } catch(e) {
-                    // save progress as json
-                    console.log(e);
+                    this.cleanUp();
+                    this.customLogger.debug("Error thrown in run(). " + e.message, e);
                     this.saveProgress(setup, {i, j, k, l});
                     reject(e);
                 }
-                this.customLogger.debug("Done");
-                this.saveProgress(setup, {i, j, k, l});
-                resolve(this.results);
             });
         }
 
@@ -263,18 +274,17 @@
 
             // shell.touch(`custom.log`);
             // shell.touch(`results.log`);
-
-            this.ports.forEach((port) => {
-                if (port.isOpen) {
-                    port.close();
-                }
-            });
             if (this.nexutil) {
                 this.nexutil.stopJamming();
             }
             if (this.contiki) {
                 this.contiki.setupJamlab({interferenceType: 0});
             }
+            this.ports.forEach((port) => {
+                if (port.isOpen) {
+                    port.close();
+                }
+            });
         }
 
         parseResults(setup, position) {
@@ -303,8 +313,9 @@
             data.result.arr = arr;
             data.result.averageRssi = averageRssi;
             data.result.received = totalReceived;
+            data.result.acked = totalSent - totalFailed;
 
-            this.customLogger.debug(`Result-${position.i}-${position.j}-${position.k}-${position.l}\n`, data.result);
+            this.customLogger.debug(`Result rdc: ${data.result.rdcDriver} chn: ${data.result.channel} type: ${setup.interferenceType} rep: ${setup.repetition}\n`, data.result);
 
             fs.writeFileSync(`${this.programPaths.communication}log/data-${position.i}-${position.j}-${position.k}-${position.l}.json`, JSON.stringify(this.results));
         }

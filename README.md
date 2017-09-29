@@ -16,7 +16,7 @@ let config = {
         receiving: "/dev/ttyUSB1",
         jamlab: "/dev/ttyUSB0"
     },
-    repetitions: 2,
+    repetitions: 1,
     channels: [26],
     rdcDrivers: ['nullrdc_driver', 'contikimac_driver'],
     interferenceTypes: [0x701, 1, 2, 3, 4, 5, 6, 7],
