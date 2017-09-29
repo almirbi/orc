@@ -44,7 +44,7 @@
                     });
 
                     rl.on('close', () => {
-                        this.calculateAverages(measurement);
+                        this.parseResults(measurement);
                     });
             }, this);
             
@@ -95,7 +95,7 @@
             }
         }
 
-        calculateAverages(measurement) {
+        parseResults(measurement) {
             let started = false, beginTime, endTime;
 
             this.xDiscretMap.forEach((xDiscret) => {
@@ -110,7 +110,9 @@
                     
 
                     if (endTime) {
-                        this.packets[this.packets.length - 1].period = beginTime - endTime;
+                        let packet = this.packets[this.packets.length - 1];
+                        packet.silencePeriod = beginTime - endTime;
+                        packet.period = packet.length + packet.silencePeriod;
                     }
                 } else {
                     
@@ -132,14 +134,29 @@
 
             });
 
+            this.packets.pop();
+            let average = this.calculateAverage();
+            let variance = this.calculateVariance(average);
+            this.customLogger.debug(`Period: ${measurement.period}, average: ${averagePeriod}ms, variance: ${variance}ms`);
+        }
+
+        calculateAverage() {
             let total = 0.0;
             this.packets.forEach((packet, index) => {
-                if (index !== this.packets.length - 1) {
-                    total += packet.length + packet.period;    
-                }
+                total += packet.period;
             });
-            let averagePeriod = total / (this.packets.length - 1);
-            this.customLogger.debug(`Period: ${measurement.period}, average: ${averagePeriod}ms`);
+            let averagePeriod = total / this.packets.length;
+            
+            return averagePeriod;
+        }
+
+        calculateVariance(average) {
+            let sum = 0.0;
+            this.packets.forEach((packet, index) => {
+                sum += Math.pow((packet.period - average), (packet.period - average));;
+            });
+            let variance = sum / this.packets.length;
+            return variance;
         }
 
         configureLogger() {
